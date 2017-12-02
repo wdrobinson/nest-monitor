@@ -1,11 +1,18 @@
-<div #chartTarget>
-  chart target
+<div *ngIf="isAuthorized">
+  <div #chartTarget>
+    chart target
+  </div>
+  <p *ngIf="currentReading">
+    Last update: {{currentReading.timestamp | date:'short'}}<br>
+    Downstairs: {{currentReading.one.temperature}}°<br>
+    Upstairs: {{currentReading.two.temperature}}°<br>
+    Outside: {{currentReading.temperatureOutside}}°<br>
+    Set temp: {{currentReading.targetTemperature}}°<br>
+    Total heating: {{heatTime/60.0 | number}} hours  
+  </p>
 </div>
-<p *ngIf="currentReading">
-  Last update: {{currentReading.timestamp | date:'short'}}<br>
-  Downstairs: {{currentReading.one.temperature}}°<br>
-  Upstairs: {{currentReading.two.temperature}}°<br>
-  Outside: {{currentReading.temperatureOutside}}°<br>
-  Set temp: {{currentReading.targetTemperature}}°<br>
-  Total heating: {{heatTime/60.0 | number}} hours  
-</p>
+<div *ngIf="!isAuthorized">
+  You are not authorized to view this data.<br>
+  <button (click)="logout()">Logout</button>
+</div>
+
