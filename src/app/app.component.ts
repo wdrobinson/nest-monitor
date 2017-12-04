@@ -4,6 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { chart } from 'highcharts';
 import { AngularFireAuth } from 'angularfire2/auth';
 import * as firebase from 'firebase/app';
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
   selector: 'app-component',
@@ -13,14 +14,31 @@ import * as firebase from 'firebase/app';
 export class AppComponent implements AfterViewInit {
   @ViewChild('chartTarget') chartTarget: ElementRef;
   chart: Highcharts.ChartObject;
-  chartCreated = false;
-  heatStart = null;
   heatTime = 0;
   currentReading = null;
   isAuthorized = true;
+  maxDataLength = 288;
+  dataSubscription: Subscription;
+  downstairsMax: number;
+  downstairsMin: number;
+  upstairsMax: number;
+  upstairsMin: number;
+  outsideMax: number;
+  outsideMin: number;
+  downstairsHumidityMax: number;
+  downstairsHumidityMin: number;
+  upstairsHumidityMax: number;
+  upstairsHumidityMin: number;  
 
   constructor(public db: AngularFireDatabase, public afAuth: AngularFireAuth) {
-    db.list('readings', ref => ref.limitToLast(2016)).valueChanges().subscribe((readings) => this.updateChart(readings), () => {this.isAuthorized = false});
+    this.subscribeToData();
+  }
+
+  subscribeToData() {
+    if (this.dataSubscription) {
+      this.dataSubscription.unsubscribe();
+    }
+    this.dataSubscription = this.db.list('readings', ref => ref.limitToLast(this.maxDataLength)).valueChanges().subscribe((readings) => this.createChart(readings), () => {this.isAuthorized = false});
   }
 
   ngAfterViewInit() {
@@ -39,11 +57,16 @@ export class AppComponent implements AfterViewInit {
           hour: '%I %p'
         }
       },
-      yAxis: {
+      yAxis: [{
         title: {
           text: '°F'
         }
-      },
+      }, {
+        title: {
+          text: ''
+        },
+        opposite: true
+      }],
       tooltip: {
         xDateFormat: '%Y-%m-%d %I:%M %p'
       },
@@ -74,6 +97,18 @@ export class AppComponent implements AfterViewInit {
       {
         name: 'Outside',
         data: []
+      },
+      {
+        name: 'Humidity Downstairs',
+        data: [],
+        visible: false,
+        yAxis: 1
+      },
+      {
+        name: 'Humidity Upstairs',
+        data: [],
+        visible: false,
+        yAxis: 1
       }
     ];
     options.series = series;  
@@ -85,74 +120,87 @@ export class AppComponent implements AfterViewInit {
   }
 
   createChart(readings: any[]) {
+    this.heatTime = 0;
     var dataTemp = [];
     var dataTempUpstairs = [];
     var dataSetTemp = [];
     var dataOutsideTemp = [];
     var heatBands = [];
-    readings.forEach(reading => {
+    var dataHumidity = [];
+    var dataHumidityUpstairs = [];
+    var heatStart = null;
+    this.currentReading = readings[readings.length - 1];
+    readings.forEach(reading => {      
       dataTemp.push([reading.timestamp,reading.one.temperature]);
+      dataHumidity.push([reading.timestamp,reading.one.humidity]);
       if (reading.two) {
         dataTempUpstairs.push([reading.timestamp,reading.two.temperature]);
+        dataHumidityUpstairs.push([reading.timestamp,reading.two.humidity]);
+        if (!this.upstairsMax || this.upstairsMax < reading.two.temperature) {
+          this.upstairsMax = reading.two.temperature;
+        } 
+        if (!this.upstairsMin || this.upstairsMin > reading.two.temperature) {
+          this.upstairsMin = reading.two.temperature;
+        } 
+        if (!this.upstairsHumidityMax || this.upstairsHumidityMax < reading.two.humidity) {
+          this.upstairsHumidityMax = reading.two.humidity;
+        } 
+        if (!this.upstairsHumidityMin || this.upstairsHumidityMin > reading.two.humidity) {
+          this.upstairsHumidityMin = reading.two.humidity;
+        }
       } else {
         dataTempUpstairs.push([reading.timestamp,null]);
+        dataHumidityUpstairs.push([reading.timestamp,null]);
       }
       dataSetTemp.push([reading.timestamp,reading.targetTemperature]);
       dataOutsideTemp.push([reading.timestamp,reading.temperatureOutside]);
       if (reading.one.isHvacOn) {
         this.heatTime += 5;
       }
-      if (this.heatStart && !reading.one.isHvacOn) {
-        heatBands.push([this.heatStart, reading.timestamp]);
-        this.heatStart = null;
+      if (heatStart && !reading.one.isHvacOn) {
+        heatBands.push([heatStart, reading.timestamp]);
+        heatStart = null;
       }
-      if (!this.heatStart && reading.one.isHvacOn) {
-        this.heatStart = reading.timestamp;
-      }      
+      if (!heatStart && reading.one.isHvacOn) {
+        heatStart = reading.timestamp;
+      }
+      if (!this.downstairsMax || this.downstairsMax < reading.one.temperature) {
+        this.downstairsMax = reading.one.temperature;
+      } 
+      if (!this.downstairsMin || this.downstairsMin > reading.one.temperature) {
+        this.downstairsMin = reading.one.temperature;
+      } 
+      if (!this.outsideMax || this.outsideMax < reading.temperatureOutside) {
+        this.outsideMax = reading.temperatureOutside;
+      } 
+      if (!this.outsideMin || this.outsideMin > reading.temperatureOutside) {
+        this.outsideMin = reading.temperatureOutside;
+      }     
+      if (!this.downstairsHumidityMax || this.downstairsHumidityMax < reading.one.humidity) {
+        this.downstairsHumidityMax = reading.one.humidity;
+      } 
+      if (!this.downstairsHumidityMin || this.downstairsHumidityMin > reading.one.humidity) {
+        this.downstairsHumidityMin = reading.one.humidity;
+      } 
     });
-    if (this.heatStart) {
-      heatBands.push([this.heatStart, this.currentReading.timestamp]);
+    if (heatStart) {
+      heatBands.push([heatStart, this.currentReading.timestamp]);
     }
     this.chart.series[0].setData(dataTemp);
     this.chart.series[1].setData(dataTempUpstairs);
     this.chart.series[2].setData(dataSetTemp);
     this.chart.series[3].setData(dataOutsideTemp);
+    this.chart.series[4].setData(dataHumidity);
+    this.chart.series[5].setData(dataHumidityUpstairs);
+    this.chart.xAxis[0].removePlotBand('band');
     heatBands.forEach(band => {
       this.addHeatPlotBand(band);
     });
-    this.chartCreated = true;
-  }
-
-  updateChart(readings: any[]) {
-    this.currentReading = readings[readings.length-1];
-    if (!this.chartCreated) {
-      this.createChart(readings);
-      return;
-    }  
-    var lastReading = readings[readings.length-1];
-    this.chart.series[0].addPoint([lastReading.timestamp,lastReading.one.temperature])
-    this.chart.series[1].addPoint([lastReading.timestamp,lastReading.two.temperature])
-    this.chart.series[2].addPoint([lastReading.timestamp,lastReading.targetTemperature])
-    this.chart.series[3].addPoint([lastReading.timestamp,lastReading.temperatureOutside])
-    if (this.currentReading.one.isHvacOn) {
-      this.heatTime += 5;
-    }
-    if (this.heatStart) {      
-      this.chart.xAxis[0].removePlotBand(this.heatStart);      
-      this.addHeatPlotBand([this.heatStart, lastReading.timestamp]);
-      if (!lastReading.one.isHvacOn) {
-        this.heatStart = null;
-      }
-    }
-    if (!this.heatStart && lastReading.one.isHvacOn) {
-      this.heatStart = lastReading.timestamp;
-      this.addHeatPlotBand([this.heatStart, this.heatStart]);
-    }
   }
 
   addHeatPlotBand(band) {
     this.chart.xAxis[0].addPlotBand({
-      id: band[0],
+      id: 'band',
       color: 'rgba(255, 0, 00, 0.2)', 
       from: band[0], 
       to: band[1]
@@ -165,6 +213,14 @@ export class AppComponent implements AfterViewInit {
        prompt: 'select_account'
     });
     firebase.auth().signInWithRedirect(googleAuthProvider);
+  }
+
+  changeDataLength(newLength: number) {
+    if (newLength === this.maxDataLength) {
+      return;
+    }
+    this.maxDataLength = newLength;
+    this.subscribeToData();
   }
 
 }

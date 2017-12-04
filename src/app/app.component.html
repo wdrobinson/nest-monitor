@@ -2,14 +2,62 @@
   <div #chartTarget>
     chart target
   </div>
-  <p *ngIf="currentReading">
+  <br>
+  <div class="text-center">
+    <div class="btn-group">
+      <button type="button" class="btn" [ngClass]="{'btn-primary': maxDataLength === 288, 'btn-secondary': maxDataLength !== 288}" (click)="changeDataLength(288)">1 day</button>
+      <button type="button" class="btn" [ngClass]="{'btn-primary': maxDataLength === 2016, 'btn-secondary': maxDataLength !== 2016}" (click)="changeDataLength(2016)">7 days</button>
+      <button type="button" class="btn" [ngClass]="{'btn-primary': maxDataLength === 8640, 'btn-secondary': maxDataLength !== 8640}" (click)="changeDataLength(8640)">1 month</button>
+      <button type="button" class="btn" [ngClass]="{'btn-primary': maxDataLength === 105120, 'btn-secondary': maxDataLength !== 105120}" (click)="changeDataLength(105120)">1 year</button>  
+    </div>
+  </div>
+  <br>
+  <div *ngIf="currentReading">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col"></th>
+          <th scope="col">Current</th>
+          <th scope="col">Min</th>
+          <th scope="col">Max</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">Downstairs</th>
+          <td>{{currentReading.one.temperature}}°</td>
+          <td>{{downstairsMin}}°</td>
+          <td>{{downstairsMax}}°</td>
+        </tr>
+        <tr>
+          <th scope="row">Upstairs</th>
+          <td>{{currentReading.two.temperature}}°</td>
+          <td>{{upstairsMin}}°</td>
+          <td>{{upstairsMax}}°</td>
+        </tr>
+        <tr>
+          <th scope="row">Outside</th>
+          <td>{{currentReading.temperatureOutside}}°</td>
+          <td>{{outsideMin}}°</td>
+          <td>{{outsideMax}}°</td>
+        </tr>
+        <tr>
+          <th scope="row">Downstairs Humidity</th>
+          <td>{{currentReading.one.humidity}}%</td>
+          <td>{{downstairsHumidityMin}}%</td>
+          <td>{{downstairsHumidityMax}}%</td>
+        </tr>
+        <tr>
+          <th scope="row">Upstairs Humidity</th>
+          <td>{{currentReading.two.humidity}}%</td>
+          <td>{{upstairsHumidityMin}}%</td>
+          <td>{{upstairsHumidityMax}}%</td>
+        </tr>
+      </tbody>
+    </table>
     Last update: {{currentReading.timestamp | date:'short'}}<br>
-    Downstairs: {{currentReading.one.temperature}}°<br>
-    Upstairs: {{currentReading.two.temperature}}°<br>
-    Outside: {{currentReading.temperatureOutside}}°<br>
-    Set temp: {{currentReading.targetTemperature}}°<br>
     Total heating: {{heatTime/60.0 | number}} hours  
-  </p>
+  </div>
 </div>
 <div *ngIf="!isAuthorized">
   You are not authorized to view this data.<br>
