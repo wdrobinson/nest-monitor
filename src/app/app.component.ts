@@ -120,7 +120,7 @@ export class AppComponent implements AfterViewInit {
   }
 
   createChart(readings: any[]) {
-    this.heatTime = 0;
+    this.heatTime = 0, this.downstairsMax = null, this.downstairsMin = null, this.upstairsMax = null, this.upstairsMin = null, this.outsideMax = null, this.outsideMin = null, this.downstairsHumidityMax = null, this.downstairsHumidityMin = null, this.upstairsHumidityMax = null, this.upstairsHumidityMin = null;  
     var dataTemp = [];
     var dataTempUpstairs = [];
     var dataSetTemp = [];
