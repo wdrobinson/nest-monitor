@@ -17,7 +17,7 @@ export class AppComponent implements AfterViewInit {
   heatTime = 0;
   currentReading = null;
   isAuthorized = true;
-  maxDataLength = 288;
+  days = 1;
   dataSubscription: Subscription;
   downstairsMax: number;
   downstairsMin: number;
@@ -38,7 +38,10 @@ export class AppComponent implements AfterViewInit {
     if (this.dataSubscription) {
       this.dataSubscription.unsubscribe();
     }
-    this.dataSubscription = this.db.list('readings', ref => ref.limitToLast(this.maxDataLength)).valueChanges().subscribe((readings) => this.createChart(readings), () => {this.isAuthorized = false});
+    var date = new Date();
+    date.setDate(date.getDate()-this.days);
+    this.dataSubscription = this.db.list('readings', ref => ref.orderByChild('timestamp').startAt(date.getTime())).valueChanges().subscribe((readings) => this.createChart(readings), () => {this.isAuthorized = false});
+
   }
 
   ngAfterViewInit() {
@@ -215,11 +218,11 @@ export class AppComponent implements AfterViewInit {
     firebase.auth().signInWithRedirect(googleAuthProvider);
   }
 
-  changeDataLength(newLength: number) {
-    if (newLength === this.maxDataLength) {
+  changeDataLength(newDays: number) {
+    if (newDays === this.days) {
       return;
     }
-    this.maxDataLength = newLength;
+    this.days = newDays;
     this.subscribeToData();
   }
 

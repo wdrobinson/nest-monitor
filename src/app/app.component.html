@@ -5,10 +5,10 @@
   <br>
   <div class="text-center">
     <div class="btn-group">
-      <button type="button" class="btn" [ngClass]="{'btn-primary': maxDataLength === 288, 'btn-secondary': maxDataLength !== 288}" (click)="changeDataLength(288)">1 day</button>
-      <button type="button" class="btn" [ngClass]="{'btn-primary': maxDataLength === 2016, 'btn-secondary': maxDataLength !== 2016}" (click)="changeDataLength(2016)">7 days</button>
-      <button type="button" class="btn" [ngClass]="{'btn-primary': maxDataLength === 8640, 'btn-secondary': maxDataLength !== 8640}" (click)="changeDataLength(8640)">1 month</button>
-      <button type="button" class="btn" [ngClass]="{'btn-primary': maxDataLength === 105120, 'btn-secondary': maxDataLength !== 105120}" (click)="changeDataLength(105120)">1 year</button>  
+      <button type="button" class="btn" [ngClass]="{'btn-primary': days === 1, 'btn-secondary': days !== 1}" (click)="changeDataLength(1)">1 day</button>
+      <button type="button" class="btn" [ngClass]="{'btn-primary': days === 7, 'btn-secondary': days !== 7}" (click)="changeDataLength(7)">7 days</button>
+      <button type="button" class="btn" [ngClass]="{'btn-primary': days === 31, 'btn-secondary': days !== 31}" (click)="changeDataLength(31)">1 month</button>
+      <button type="button" class="btn" [ngClass]="{'btn-primary': days === 365, 'btn-secondary': days !== 365}" (click)="changeDataLength(365)">1 year</button>  
     </div>
   </div>
   <br>
