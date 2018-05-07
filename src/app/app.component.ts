@@ -15,6 +15,7 @@ export class AppComponent implements AfterViewInit {
   @ViewChild('chartTarget') chartTarget: ElementRef;
   chart: Highcharts.ChartObject;
   heatTime = 0;
+  coolTime = 0;
   currentReading = null;
   isAuthorized = true;
   days = 1;
@@ -123,15 +124,17 @@ export class AppComponent implements AfterViewInit {
   }
 
   createChart(readings: any[]) {
-    this.heatTime = 0, this.downstairsMax = null, this.downstairsMin = null, this.upstairsMax = null, this.upstairsMin = null, this.outsideMax = null, this.outsideMin = null, this.downstairsHumidityMax = null, this.downstairsHumidityMin = null, this.upstairsHumidityMax = null, this.upstairsHumidityMin = null;  
+    this.heatTime = 0, this.coolTime = 0, this.downstairsMax = null, this.downstairsMin = null, this.upstairsMax = null, this.upstairsMin = null, this.outsideMax = null, this.outsideMin = null, this.downstairsHumidityMax = null, this.downstairsHumidityMin = null, this.upstairsHumidityMax = null, this.upstairsHumidityMin = null;  
     var dataTemp = [];
     var dataTempUpstairs = [];
     var dataSetTemp = [];
     var dataOutsideTemp = [];
     var heatBands = [];
+    var coolBands = [];
     var dataHumidity = [];
     var dataHumidityUpstairs = [];
     var heatStart = null;
+    var coolStart = null;
     this.currentReading = readings[readings.length - 1];
     readings.forEach(reading => {      
       dataTemp.push([reading.timestamp,reading.one.temperature]);
@@ -160,12 +163,22 @@ export class AppComponent implements AfterViewInit {
       if (reading.one.isHvacOn) {
         this.heatTime += 5;
       }
+      if (reading.two.isHvacOn) {
+        this.coolTime += 5;
+      }
       if (heatStart && !reading.one.isHvacOn) {
         heatBands.push([heatStart, reading.timestamp]);
         heatStart = null;
       }
       if (!heatStart && reading.one.isHvacOn) {
         heatStart = reading.timestamp;
+      }
+      if (coolStart && !reading.two.isHvacOn) {
+        coolBands.push([coolStart, reading.timestamp]);
+        coolStart = null;
+      }
+      if (!coolStart && reading.two.isHvacOn) {
+        coolStart = reading.timestamp;
       }
       if (!this.downstairsMax || this.downstairsMax < reading.one.temperature) {
         this.downstairsMax = reading.one.temperature;
@@ -189,22 +202,38 @@ export class AppComponent implements AfterViewInit {
     if (heatStart) {
       heatBands.push([heatStart, this.currentReading.timestamp]);
     }
+    if (coolStart) {
+      coolBands.push([coolStart, this.currentReading.timestamp]);
+    }
     this.chart.series[0].setData(dataTemp);
     this.chart.series[1].setData(dataTempUpstairs);
     this.chart.series[2].setData(dataSetTemp);
     this.chart.series[3].setData(dataOutsideTemp);
     this.chart.series[4].setData(dataHumidity);
     this.chart.series[5].setData(dataHumidityUpstairs);
-    this.chart.xAxis[0].removePlotBand('band');
+    this.chart.xAxis[0].removePlotBand('heat-band');
+    this.chart.xAxis[0].removePlotBand('cool-band');
     heatBands.forEach(band => {
       this.addHeatPlotBand(band);
+    });
+    coolBands.forEach(band => {
+      this.addCoolPlotBand(band);
     });
   }
 
   addHeatPlotBand(band) {
     this.chart.xAxis[0].addPlotBand({
-      id: 'band',
-      color: 'rgba(255, 0, 00, 0.2)', 
+      id: 'heat-band',
+      color: 'rgba(255, 0, 0, 0.2)', 
+      from: band[0], 
+      to: band[1]
+    });
+  }
+
+  addCoolPlotBand(band) {
+    this.chart.xAxis[0].addPlotBand({
+      id: 'cool-band',
+      color: 'rgba(0, 0, 255, 0.2)', 
       from: band[0], 
       to: band[1]
     });

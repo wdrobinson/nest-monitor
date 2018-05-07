@@ -55,8 +55,15 @@
         </tr>
       </tbody>
     </table>
-    Last update: {{currentReading.timestamp | date:'short'}}<br>
-    Total heating: {{heatTime/60.0 | number}} hours  
+    <div>
+      Last update: {{currentReading.timestamp | date:'short'}}
+    </div>
+    <div>
+      Total heating: {{heatTime/60.0 | number}} hours  
+    </div>
+    <div>
+      Total cooling: {{coolTime/60.0 | number}} hours  
+    </div>    
   </div>
 </div>
 <div *ngIf="!isAuthorized">
